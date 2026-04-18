@@ -1,8 +1,15 @@
-const successResponse = (message = "Success", data = null, meta = {}) => ({
-  success: true,
+const successResponse = (message = "", data = null, meta = {}) => ({
+  status: "success",
   message,
   ...(data !== null && { data }),
   ...meta,
 });
 
-module.exports = successResponse;
+export const errorResponse = (message = "", data = null, meta = {}) => ({
+  status: "error",
+  message,
+  ...(data !== null && { data }),
+  ...meta,
+});
+
+export default successResponse;

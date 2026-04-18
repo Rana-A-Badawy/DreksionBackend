@@ -1,20 +1,16 @@
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
-const crypto = require("crypto");
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import crypto from "crypto";
 
 const fileTypesMap = {
   image: ["image/jpeg", "image/png", "image/webp"],
   pdf: ["application/pdf"],
   cpp: ["text/x-c++src", "text/plain"],
-  video: ["video/mp4", "video/mkv"]
+  video: ["video/mp4", "video/mkv"],
 };
 
-const uploadFile = (
-  folder = "general",
-  allowedTypes = ["image"],
-  maxSizeMB = 2 
-) => {
+export const uploadFile = (folder = "general", allowedTypes = ["image"], maxSizeMB = 2) => {
   const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       const dir = `uploads/${folder}`;
@@ -30,13 +26,11 @@ const uploadFile = (
         path.extname(file.originalname);
 
       cb(null, uniqueName);
-    }
+    },
   });
 
   const fileFilter = (req, file, cb) => {
-    const allowedMimes = allowedTypes.flatMap(
-      (type) => fileTypesMap[type] || []
-    );
+    const allowedMimes = allowedTypes.flatMap((type) => fileTypesMap[type] || []);
 
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
@@ -48,8 +42,6 @@ const uploadFile = (
   return multer({
     storage,
     fileFilter,
-    limits: { fileSize: maxSizeMB * 1024 * 1024 } 
+    limits: { fileSize: maxSizeMB * 1024 * 1024 },
   }).single("file");
 };
-
-module.exports = uploadFile;

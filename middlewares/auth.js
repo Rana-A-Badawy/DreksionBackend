@@ -1,36 +1,45 @@
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+import jwt from "jsonwebtoken";
+import User from "../models/UserModel.js";
 
-const auth = (...allowedRoles) => {
+export const auth = (...allowedRoles) => {
   return async (req, res, next) => {
     try {
-      const token = req.headers.authorization?.split(" ")[1];
-      if (!token) {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
         return res.status(401).json({ message: "No token provided" });
       }
+      const token = authHeader.split(" ")[1];
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        
-      const user = await User.findById(decoded.userId);
+
+      const user = await User.findById(decoded.id).select("-password");
       if (!user) {
-        return res.status(404).json({ message: "User not found" });
+        return res.status(401).json({ message: "User no longer exists" });
+      }
+
+      if (!user.isActive) {
+        return res.status(401).json({ message: "Account is deactivated" });
+      }
+
+      if (user.changedPasswordAfter(decoded.iat)) {
+        return res.status(401).json({ message: "Password recently changed, please login again" });
+      }
+
+      if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+        return res.status(403).json({ message: "You don't have permission to perform this action" });
       }
 
       req.user = user;
-
-      if (allowedRoles.length === 0) {
-        return next();
-      }
-
-      if (!allowedRoles.includes(user.role)) {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-
       next();
+
     } catch (err) {
-      return res.status(401).json({ message: "Invalid token" });
+      if (err.name === "TokenExpiredError") {
+        return res.status(401).json({ message: "Token expired, please login again" });
+      }
+      if (err.name === "JsonWebTokenError") {
+        return res.status(401).json({ message: "Invalid token" });
+      }
+      return res.status(500).json({ message: "Something went wrong" });
     }
   };
 };
-
-module.exports = auth;
