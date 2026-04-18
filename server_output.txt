@@ -1,0 +1,5 @@
+◇ injected env (6) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+◇ injected env (0) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+Server running on port 3000
+Uploads directory is ready at: C:\Users\zm771\Desktop\dehsion2\DreksionBackend\uploads
+DB Connected successfully 
