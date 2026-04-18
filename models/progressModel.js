@@ -1,9 +1,8 @@
-import Progress from '../models/progress.model.js';
-import Skill from '../models/skill.model.js';
-import Booking from '../models/booking.model.js';
-import traineeModel from './trainee.model';
+import { Progress, Booking } from "./bookingModel.js";
+import { Skill } from "./other.js";
+import Trainee from "./traineeModel.js";
 
-async function initLevelProgress(traineeId, levelId) {
+export async function initLevelProgress(traineeId, levelId) {
   const skills = await Skill.find({ level: levelId });
 
   const ops = skills.map((skill) =>
@@ -17,16 +16,14 @@ async function initLevelProgress(traineeId, levelId) {
   return Promise.all(ops);
 }
 
-// ─── Get full progress for a trainee ─────────────────────────
-async function getTraineeProgress(traineeId) {
+export async function getTraineeProgress(traineeId) {
   const rows = await Progress.find({ trainee: traineeId })
     .populate({
-      path: 'skill',
-      populate: { path: 'level' },
+      path: "skill",
+      populate: { path: "level" },
     })
-    .sort({ 'skill.orderIndex': 1 });
+    .sort({ "skill.orderIndex": 1 });
 
-  // Group by level
   const grouped = {};
   for (const row of rows) {
     const lvl = row.skill.level;
@@ -41,19 +38,16 @@ async function getTraineeProgress(traineeId) {
     if (row.isCompleted) grouped[key].completedCount++;
   }
 
-  // Sort by levelNumber
   return Object.values(grouped).sort((a, b) => a.level.levelNumber - b.level.levelNumber);
 }
 
-// ─── Mark a skill as completed (instructor only) ──────────────
-async function markSkillComplete(traineeId, skillId, instructorId) {
-  // Validate instructor has an active booking with this trainee
+export async function markSkillComplete(traineeId, skillId, instructorId) {
   const hasBooking = await Booking.findOne({
     trainee: traineeId,
     instructor: instructorId,
-    status: { $in: ['confirmed', 'completed'] },
+    status: { $in: ["confirmed", "completed"] },
   });
-  if (!hasBooking) throw new Error('No active booking between this instructor and trainee');
+  if (!hasBooking) throw new Error("No active booking between this instructor and trainee");
 
   const updated = await Progress.findOneAndUpdate(
     { trainee: traineeId, skill: skillId },
@@ -65,33 +59,32 @@ async function markSkillComplete(traineeId, skillId, instructorId) {
       },
     },
     { upsert: true, new: true }
-  )
-    .populate({ path: 'skill', populate: { path: 'level' } });
+  ).populate({ path: "skill", populate: { path: "level" } });
 
-  // Auto-advance level if all required skills are done
-  const canAdvance = await traineeModel.canAdvanceLevel(traineeId);
-  if (canAdvance) {
-    await traineeModel.advanceLevel(traineeId);
+  if (Trainee.canAdvanceLevel && Trainee.advanceLevel) {
+    const canAdvance = await Trainee.canAdvanceLevel(traineeId);
+    if (canAdvance) {
+      await Trainee.advanceLevel(traineeId);
+    }
   }
 
   return updated;
 }
 
-// ─── Summary for a specific level ────────────────────────────
-async function getLevelSummary(traineeId, levelId) {
+export async function getLevelSummary(traineeId, levelId) {
   const [total, required, completed, requiredCompleted] = await Promise.all([
     Skill.countDocuments({ level: levelId }),
     Skill.countDocuments({ level: levelId, isRequired: true }),
     Progress.countDocuments({
       trainee: traineeId,
       isCompleted: true,
-      skill: { $in: await Skill.find({ level: levelId }).distinct('_id') },
+      skill: { $in: await Skill.find({ level: levelId }).distinct("_id") },
     }),
     Progress.countDocuments({
       trainee: traineeId,
       isCompleted: true,
       skill: {
-        $in: await Skill.find({ level: levelId, isRequired: true }).distinct('_id'),
+        $in: await Skill.find({ level: levelId, isRequired: true }).distinct("_id"),
       },
     }),
   ]);
@@ -105,9 +98,3 @@ async function getLevelSummary(traineeId, levelId) {
     progressPercent: total > 0 ? Math.round((completed / total) * 100) : 0,
   };
 }
-export default {
-  initLevelProgress,
-  getTraineeProgress,
-  markSkillComplete,
-  getLevelSummary,
-};

@@ -67,14 +67,43 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    licenseImage: {
+      type: String,
+      default: null,
+    },
+    licenseNumber: {
+      type: String,
+      trim: true,
+    },
     role: {
       type: String,
       enum: ["admin", "instructor", "trainee"],
       required: true,
     },
+    detales: {
+      haveAcar: {
+        type: Boolean,
+      },
+      carType: {
+        type: [String], // تم التعديل هنا: تحديد أن المصفوفة تحتوي على نصوص
+        enum: {
+          values: ["automatic", "manual"],
+          message: "نوع السيارة يجب أن يكون automatic أو manual",
+        },
+        default: [], 
+      }
+    },
     isActive: {
       type: Boolean,
       default: true,
+    },
+    otp: {
+      type: String,
+      default: null,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
     },
     lastLogin: {
       type: Date,
@@ -103,11 +132,14 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
+
+// تسجيل وقت تغيير الباسوورد
 userSchema.pre("save", function (next) {
   if (!this.isModified("password") || this.isNew) return next();
   this.passwordChangedAt = Date.now() - 1000;
   next();
 });
+
 
 userSchema.methods.correctPassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
@@ -121,4 +153,4 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   return false;
 };
 
-export default mongoose.model("User", userSchema);
+export default mongoose.model("User", userSchema); 

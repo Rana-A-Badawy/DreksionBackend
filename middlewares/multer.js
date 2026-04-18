@@ -10,11 +10,17 @@ const fileTypesMap = {
   video: ["video/mp4", "video/mkv"],
 };
 
-export const uploadFile = (folder = "general", allowedTypes = ["image"], maxSizeMB = 2) => {
+const uploadFile = (
+  folder = "general",
+  allowedTypes = ["image"],
+  maxSizeMB = 5 
+) => {
   const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       const dir = `uploads/${folder}`;
-      fs.mkdirSync(dir, { recursive: true });
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
       cb(null, dir);
     },
 
@@ -22,7 +28,7 @@ export const uploadFile = (folder = "general", allowedTypes = ["image"], maxSize
       const uniqueName =
         Date.now() +
         "-" +
-        crypto.randomBytes(12).toString("hex") +
+        crypto.randomBytes(6).toString("hex") +
         path.extname(file.originalname);
 
       cb(null, uniqueName);
@@ -35,13 +41,15 @@ export const uploadFile = (folder = "general", allowedTypes = ["image"], maxSize
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error(`Allowed types: ${allowedTypes.join(", ")}`), false);
+      cb(new Error(`الأنواع المسموحة فقط هي: ${allowedTypes.join(", ")}`), false);
     }
   };
 
   return multer({
     storage,
     fileFilter,
-    limits: { fileSize: maxSizeMB * 1024 * 1024 },
-  }).single("file");
+    limits: { fileSize: maxSizeMB * 1024 * 1024 } 
+  });
 };
+
+export default uploadFile;
