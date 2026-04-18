@@ -21,6 +21,13 @@ export const register = async (req, res) => {
       detales,
     } = req.body;
 
+    if (!email) {
+      return res.status(400).json({
+        status: "error",
+        message: "Email is required",
+      });
+    }
+
     const normalizedEmail = email.trim().toLowerCase();
 
     const exists = await User.findOne({ email: normalizedEmail });
@@ -170,6 +177,13 @@ export const resendOTP = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        status: "error",
+        message: "Email is required",
+      });
+    }
 
     const normalizedEmail = email.trim().toLowerCase();
 

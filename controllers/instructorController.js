@@ -1,12 +1,20 @@
 import { Instructor, User, Booking, Verification, Trainee } from "../models/index.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import AppError from "../utils/appError.js";
-import successResponse from "../utils/successResponse.js";
+import successResponse, { errorResponse } from "../utils/successResponse.js";
 import { getPagination, paginatedResponse } from "../utils/pagination.js";
 import { getFileUrl } from "../middlewares/uploadMiddleware.js";
 import { VERIFICATION_STATUS, BOOKING_STATUS } from "../config/constants.js";
 
-export const getAllInstructors = asyncHandler(async (req, res) => {
+const handleCastError = (err, res) => {
+  const message = `Invalid ${err.path}: ${err.value}`;
+  return res.status(400).json(errorResponse(message));
+};
+
+export const getAllInstructors = asyncHandler(async (req, res, next) => {
+  if (req.query.id && !req.query.id.match(/^[0-9a-fA-F]{24}$/)) {
+    return next(new AppError("Invalid instructor ID format", 400));
+  }
   const { page, limit, skip } = getPagination(req.query);
   const {
     transmission,
@@ -21,18 +29,41 @@ export const getAllInstructors = asyncHandler(async (req, res) => {
 
   const instructorFilter = { isVerified: true };
 
+  if (transmission && !["manual", "automatic"].includes(transmission)) {
+    return next(new AppError("Transmission must be 'manual' or 'automatic'", 400));
+  }
   if (transmission === "manual") instructorFilter.canTeachManual = true;
   if (transmission === "automatic") instructorFilter.canTeachAutomatic = true;
+  
+  if (minPrice && (isNaN(minPrice) || Number(minPrice) < 0)) {
+    return next(new AppError("minPrice must be a positive number", 400));
+  }
+  if (maxPrice && (isNaN(maxPrice) || Number(maxPrice) < 0)) {
+    return next(new AppError("maxPrice must be a positive number", 400));
+  }
   if (minPrice) instructorFilter["pricing.minPrice"] = { $gte: Number(minPrice) };
   if (maxPrice) instructorFilter["pricing.maxPrice"] = { $lte: Number(maxPrice) };
+  
+  if (minRating && (isNaN(minRating) || Number(minRating) < 0 || Number(minRating) > 5)) {
+    return next(new AppError("minRating must be between 0 and 5", 400));
+  }
   if (minRating) instructorFilter["rating.average"] = { $gte: Number(minRating) };
+
+  if (gender && !["male", "female"].includes(gender)) {
+    return next(new AppError("gender must be 'male' or 'female'", 400));
+  }
 
   let userFilter = {};
   if (lat && lng) {
+    const latNum = parseFloat(lat);
+    const lngNum = parseFloat(lng);
+    if (isNaN(latNum) || isNaN(lngNum) || latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) {
+      return next(new AppError("Invalid coordinates. Lat must be -90 to 90, Lng must be -180 to 180", 400));
+    }
     userFilter.location = {
       $near: {
-        $geometry: { type: "Point", coordinates: [parseFloat(lng), parseFloat(lat)] },
-        $maxDistance: Number(maxDistance),
+        $geometry: { type: "Point", coordinates: [lngNum, latNum] },
+        $maxDistance: Number(maxDistance) || 50000,
       },
     };
   }
@@ -70,6 +101,9 @@ export const getAllInstructors = asyncHandler(async (req, res) => {
 });
 
 export const getInstructor = asyncHandler(async (req, res, next) => {
+  if (!req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+    return next(new AppError("Invalid instructor ID format", 400));
+  }
   const instructor = await Instructor.findById(req.params.id)
     .populate("user", "firstName lastName email phone gender location profileImage createdAt")
     .populate("vehicles");
@@ -78,7 +112,6 @@ export const getInstructor = asyncHandler(async (req, res, next) => {
 
   res.status(200).json(successResponse("Instructor fetched", instructor));
 });
-
 export const getMe = asyncHandler(async (req, res, next) => {
   const instructor = await Instructor.findOne({ user: req.user._id })
     .populate("user", "-password")
@@ -97,6 +130,40 @@ export const updateMe = asyncHandler(async (req, res, next) => {
     hasOwnCar,
     minPrice, maxPrice,
   } = req.body;
+
+  if (firstName && (typeof firstName !== "string" || firstName.length < 2 || firstName.length > 50)) {
+    return next(new AppError("firstName must be 2-50 characters", 400));
+  }
+  if (lastName && (typeof lastName !== "string" || lastName.length < 2 || lastName.length > 50)) {
+    return next(new AppError("lastName must be 2-50 characters", 400));
+  }
+  if (phone && !/^01[0-9]{9}$/.test(phone)) {
+    return next(new AppError("Invalid Egyptian phone number", 400));
+  }
+  if (bio && (typeof bio !== "string" || bio.length > 500)) {
+    return next(new AppError("bio must not exceed 500 characters", 400));
+  }
+  if (yearsOfExperience !== undefined && (isNaN(yearsOfExperience) || yearsOfExperience < 0 || yearsOfExperience > 50)) {
+    return next(new AppError("yearsOfExperience must be 0-50", 400));
+  }
+  if (canTeachManual !== undefined && typeof canTeachManual !== "boolean") {
+    return next(new AppError("canTeachManual must be boolean", 400));
+  }
+  if (canTeachAutomatic !== undefined && typeof canTeachAutomatic !== "boolean") {
+    return next(new AppError("canTeachAutomatic must be boolean", 400));
+  }
+  if (hasOwnCar !== undefined && typeof hasOwnCar !== "boolean") {
+    return next(new AppError("hasOwnCar must be boolean", 400));
+  }
+  if (minPrice !== undefined && (isNaN(minPrice) || minPrice < 0)) {
+    return next(new AppError("minPrice must be positive", 400));
+  }
+  if (maxPrice !== undefined && (isNaN(maxPrice) || maxPrice < 0)) {
+    return next(new AppError("maxPrice must be positive", 400));
+  }
+  if (minPrice !== undefined && maxPrice !== undefined && Number(minPrice) > Number(maxPrice)) {
+    return next(new AppError("minPrice cannot be greater than maxPrice", 400));
+  }
 
   const userUpdates = {};
   if (firstName) userUpdates.firstName = firstName;

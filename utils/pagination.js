@@ -6,7 +6,7 @@ export const getPagination = (query) => {
 };
 
 export const paginatedResponse = (data, total, page, limit) => ({
-  success: true,
+  status: "success",
   total,
   page,
   limit,

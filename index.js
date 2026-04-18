@@ -6,11 +6,11 @@ import path from "path";
 import { fileURLToPath } from "url";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
-import userRoutes from "./routes/userRoutes.js";
 import instructorRoutes from "./routes/instructorRoutes.js";
-import notFound from "./middlewares/notFound.js";
-import errorHandler from "./middlewares/errorHandler.js";
+import userRoutes from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRouter.js";
+import errorHandler from "./middlewares/errorHandler.js";
+import notFound from "./middlewares/notFound.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,19 +23,19 @@ connectDB();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/uploads", express.static(path.join(__dirname, "uploads")))
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.get("/", (req, res) => {
   res.send("Server is running...");
 });
 
 app.use("/api/v1/auth", authRoutes);
-app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/instructors", instructorRoutes);
+app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/admin", adminRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
-app.use("/api/v1/admin", adminRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

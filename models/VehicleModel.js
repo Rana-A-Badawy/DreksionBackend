@@ -76,7 +76,6 @@ const vehicleSchema = new mongoose.Schema(
 vehicleSchema.virtual("fullName").get(function () {
   return `${this.brand} ${this.model} ${this.year}`;
 });
-vehicleSchema.index({ plateNumber: 1 }, { unique: true });
 vehicleSchema.index({ instructor: 1 });
 
 export default mongoose.model("Vehicle", vehicleSchema);

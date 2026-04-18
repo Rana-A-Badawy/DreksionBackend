@@ -14,8 +14,13 @@ const errorHandler = (err, req, res, next) => {
     error = new AppError(message, 400);
   }
 
+  if (err.name === "CastError") {
+    const message = `Invalid ${err.path}: ${err.value}`;
+    error = new AppError(message, 400);
+  }
+
   res.status(error.statusCode || 500).json({
-    success: false,
+    status: "error",
     message: error.message || "Server Error",
   });
 };
