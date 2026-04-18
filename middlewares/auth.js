@@ -17,9 +17,9 @@ export const auth = (...allowedRoles) => {
         return res.status(401).json({ message: "User no longer exists" });
       }
 
-      if (!user.isActive) {
-        return res.status(401).json({ message: "Account is deactivated" });
-      }
+    //   if (!user.isActive) {
+    //     return res.status(401).json({ message: "Account is deactivated" });
+    //   }
 
       if (user.changedPasswordAfter(decoded.iat)) {
         return res.status(401).json({ message: "Password recently changed, please login again" });

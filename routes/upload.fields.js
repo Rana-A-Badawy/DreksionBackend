@@ -15,5 +15,5 @@ router.post('/register-instructor', upload.fields([
   const backImagePath = req.files['nationalIdBack'][0].path;
   
   // الآن يمكنك حفظ هذه المسارات في MongoDB
-  res.send("تم رفع الصور بنجاح وسيتم مراجعتها");
+  res.send("تم رفع الصور بنجاح وسيتم مراجعتها")
 });

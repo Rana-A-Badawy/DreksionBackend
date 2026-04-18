@@ -33,7 +33,7 @@ export const register = async (req, res) => {
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
+       
     const user = await User.create({
       firstName,
       lastName,
@@ -48,6 +48,7 @@ export const register = async (req, res) => {
       detales: typeof detales === "string" ? JSON.parse(detales) : detales,
       otp,
       isVerified: false,
+      isActive: false,
     });
 
     await transporter.sendMail({
@@ -80,7 +81,7 @@ export const verifyOTP = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        status: "fail",
+        status: "error",
         message: "المستخدم غير موجود",
       });
     }
@@ -133,14 +134,14 @@ export const resendOTP = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        status: "fail",
+        status: "error",
         message: "المستخدم غير موجود",
       });
     }
 
     if (user.isVerified) {
       return res.status(400).json({
-        status: "fail",
+        status: "error",
         message: "الحساب متفعل بالفعل",
       });
     }
