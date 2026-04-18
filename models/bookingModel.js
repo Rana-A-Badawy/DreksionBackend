@@ -1,4 +1,5 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
+
 const availabilitySchema = new mongoose.Schema(
   {
     instructor: {
@@ -9,7 +10,7 @@ const availabilitySchema = new mongoose.Schema(
     dayOfWeek: {
       type: Number,
       required: [true, "اليوم مطلوب"],
-      min: 0, 
+      min: 0,
       max: 6,
     },
     slots: [
@@ -35,7 +36,9 @@ const availabilitySchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
 availabilitySchema.index({ instructor: 1, dayOfWeek: 1 });
+
 const bookingSchema = new mongoose.Schema(
   {
     trainee: {
@@ -63,11 +66,11 @@ const bookingSchema = new mongoose.Schema(
       required: [true, "تاريخ الحجز مطلوب"],
     },
     startTime: {
-      type: String, // "10:00"
+      type: String,
       required: [true, "وقت البداية مطلوب"],
     },
     endTime: {
-      type: String, 
+      type: String,
     },
     durationMinutes: {
       type: Number,
@@ -76,11 +79,11 @@ const bookingSchema = new mongoose.Schema(
     location: {
       address: String,
       coordinates: {
-        type: [Number], 
+        type: [Number],
       },
     },
     meetingPoint: {
-      type: String, 
+      type: String,
     },
     price: {
       amount: {
@@ -115,10 +118,10 @@ const bookingSchema = new mongoose.Schema(
       default: null,
     },
     traineeNotes: {
-      type: String, 
+      type: String,
     },
     instructorNotes: {
-      type: String, 
+      type: String,
     },
     paymentStatus: {
       type: String,
@@ -137,12 +140,15 @@ const bookingSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
+
 bookingSchema.index({ trainee: 1, status: 1 });
 bookingSchema.index({ instructor: 1, bookingDate: 1 });
 bookingSchema.index({ bookingDate: 1 });
+
 bookingSchema.virtual("isUpcoming").get(function () {
   return this.bookingDate > new Date();
 });
+
 const progressSchema = new mongoose.Schema(
   {
     trainee: {
@@ -185,8 +191,11 @@ const progressSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
 progressSchema.index({ trainee: 1, skill: 1 }, { unique: true });
+
 const Availability = mongoose.model("Availability", availabilitySchema);
-const Booking      = mongoose.model("Booking", bookingSchema);
-const Progress     = mongoose.model("Progress", progressSchema);
-module.exports = { Availability, Booking, Progress };
+const Booking = mongoose.model("Booking", bookingSchema);
+const Progress = mongoose.model("Progress", progressSchema);
+
+export { Availability, Booking, Progress };

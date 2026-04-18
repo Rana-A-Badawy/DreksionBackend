@@ -1,4 +1,5 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
+
 const vehicleSchema = new mongoose.Schema(
   {
     instructor: {
@@ -77,5 +78,5 @@ vehicleSchema.virtual("fullName").get(function () {
 });
 vehicleSchema.index({ plateNumber: 1 }, { unique: true });
 vehicleSchema.index({ instructor: 1 });
-const Vehicle = mongoose.model("Vehicle", vehicleSchema);
-module.exports = Vehicle;
+
+export default mongoose.model("Vehicle", vehicleSchema);

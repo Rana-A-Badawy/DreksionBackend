@@ -1,8 +1,5 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
-// ============================================================
-// REVIEW MODEL
-// ============================================================
 const reviewSchema = new mongoose.Schema(
   {
     trainee: {
@@ -18,7 +15,7 @@ const reviewSchema = new mongoose.Schema(
     booking: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Booking",
-      unique: true, // مراجعة واحدة فقط لكل حجز
+      unique: true,
       required: [true, "الحجز مطلوب"],
     },
     rating: {
@@ -32,12 +29,11 @@ const reviewSchema = new mongoose.Schema(
       maxlength: [500, "التعليق يجب ألا يتجاوز 500 حرف"],
       trim: true,
     },
-    // تقييمات تفصيلية (اختياري)
     subRatings: {
-      punctuality: { type: Number, min: 1, max: 5 },   // الالتزام بالمواعيد
-      communication: { type: Number, min: 1, max: 5 },  // أسلوب الشرح
-      patience: { type: Number, min: 1, max: 5 },       // الصبر
-      carCondition: { type: Number, min: 1, max: 5 },   // حالة السيارة
+      punctuality: { type: Number, min: 1, max: 5 },
+      communication: { type: Number, min: 1, max: 5 },
+      patience: { type: Number, min: 1, max: 5 },
+      carCondition: { type: Number, min: 1, max: 5 },
     },
     isVisible: {
       type: Boolean,
@@ -50,7 +46,6 @@ const reviewSchema = new mongoose.Schema(
 reviewSchema.index({ instructor: 1 });
 reviewSchema.index({ trainee: 1 });
 
-// بعد حفظ الريفيو، حدّث متوسط تقييم المدرب تلقائياً
 reviewSchema.post("save", async function () {
   await updateInstructorRating(this.instructor);
 });
@@ -85,9 +80,6 @@ async function updateInstructorRating(instructorId) {
   }
 }
 
-// ============================================================
-// CONVERSATION MODEL
-// ============================================================
 const conversationSchema = new mongoose.Schema(
   {
     trainee: {
@@ -110,7 +102,6 @@ const conversationSchema = new mongoose.Schema(
       sentAt: { type: Date, default: null },
       senderId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
     },
-    // عدد الرسائل غير المقروءة لكل طرف
     unreadCount: {
       trainee: { type: Number, default: 0 },
       instructor: { type: Number, default: 0 },
@@ -127,12 +118,8 @@ const conversationSchema = new mongoose.Schema(
   }
 );
 
-// محادثة واحدة فقط بين كل متدرب ومدرب
 conversationSchema.index({ trainee: 1, instructor: 1 }, { unique: true });
 
-// ============================================================
-// MESSAGE MODEL
-// ============================================================
 const messageSchema = new mongoose.Schema(
   {
     conversation: {
@@ -158,7 +145,6 @@ const messageSchema = new mongoose.Schema(
     mediaUrl: {
       type: String,
       default: null,
-      // رابط الصورة أو الملف في حالة message_type != text
     },
     isSeen: {
       type: Boolean,
@@ -179,7 +165,6 @@ const messageSchema = new mongoose.Schema(
 
 messageSchema.index({ conversation: 1, createdAt: -1 });
 
-// بعد إرسال رسالة، حدّث آخر رسالة في المحادثة تلقائياً
 messageSchema.post("save", async function () {
   await mongoose.model("Conversation").findByIdAndUpdate(this.conversation, {
     "lastMessage.text": this.messageType === "text" ? this.content : `📎 ${this.messageType}`,
@@ -188,11 +173,8 @@ messageSchema.post("save", async function () {
   });
 });
 
-// ============================================================
-// EXPORTS
-// ============================================================
-const Review       = mongoose.model("Review", reviewSchema);
+const Review = mongoose.model("Review", reviewSchema);
 const Conversation = mongoose.model("Conversation", conversationSchema);
-const Message      = mongoose.model("Message", messageSchema);
+const Message = mongoose.model("Message", messageSchema);
 
-module.exports = { Review, Conversation, Message };
+export { Review, Conversation, Message };
