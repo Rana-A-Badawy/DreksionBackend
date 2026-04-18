@@ -1,7 +1,7 @@
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
-const crypto = require("crypto");
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import crypto from "crypto";
 
 const fileTypesMap = {
   image: ["image/jpeg", "image/png", "image/webp"],
@@ -13,12 +13,14 @@ const fileTypesMap = {
 const uploadFile = (
   folder = "general",
   allowedTypes = ["image"],
-  maxSizeMB = 2 
+  maxSizeMB = 5 
 ) => {
   const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       const dir = `uploads/${folder}`;
-      fs.mkdirSync(dir, { recursive: true });
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
       cb(null, dir);
     },
 
@@ -26,7 +28,7 @@ const uploadFile = (
       const uniqueName =
         Date.now() +
         "-" +
-        crypto.randomBytes(12).toString("hex") +
+        crypto.randomBytes(6).toString("hex") +
         path.extname(file.originalname);
 
       cb(null, uniqueName);
@@ -41,7 +43,7 @@ const uploadFile = (
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error(`Allowed types: ${allowedTypes.join(", ")}`), false);
+      cb(new Error(`الأنواع المسموحة فقط هي: ${allowedTypes.join(", ")}`), false);
     }
   };
 
@@ -49,7 +51,7 @@ const uploadFile = (
     storage,
     fileFilter,
     limits: { fileSize: maxSizeMB * 1024 * 1024 } 
-  }).single("file");
+  });
 };
 
-module.exports = uploadFile;
+export default uploadFile;

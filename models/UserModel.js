@@ -1,5 +1,6 @@
-const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
+
 const userSchema = new mongoose.Schema(
   {
     firstName: {
@@ -66,14 +67,43 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    licenseImage: {
+      type: String,
+      default: null,
+    },
+    licenseNumber: {
+      type: String,
+      trim: true,
+    },
     role: {
       type: String,
       enum: ["admin", "instructor", "trainee"],
       required: true,
     },
+    detales: {
+      haveAcar: {
+        type: Boolean,
+      },
+      carType: {
+        type: [String], // تم التعديل هنا: تحديد أن المصفوفة تحتوي على نصوص
+        enum: {
+          values: ["automatic", "manual"],
+          message: "نوع السيارة يجب أن يكون automatic أو manual",
+        },
+        default: [], 
+      }
+    },
     isActive: {
       type: Boolean,
       default: true,
+    },
+    otp: {
+      type: String,
+      default: null,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
     },
     lastLogin: {
       type: Date,
@@ -89,23 +119,35 @@ const userSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
+
+// Index للبحث الجغرافي
 userSchema.index({ location: "2dsphere" });
+
+// Virtual: الاسم الكامل
 userSchema.virtual("fullName").get(function () {
   return `${this.firstName} ${this.lastName}`;
 });
+
+// Hash الباسوورد قبل الحفظ
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 12);
   next();
 });
+
+// تسجيل وقت تغيير الباسوورد
 userSchema.pre("save", function (next) {
   if (!this.isModified("password") || this.isNew) return next();
   this.passwordChangedAt = Date.now() - 1000;
   next();
 });
+
+// Method: مقارنة الباسوورد
 userSchema.methods.correctPassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
+
+// Method: هل تم تغيير الباسوورد بعد إصدار التوكن
 userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   if (this.passwordChangedAt) {
     const changedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
@@ -113,5 +155,6 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   }
   return false;
 };
+
 const User = mongoose.model("User", userSchema);
-module.exports = User;
+export default User; 
