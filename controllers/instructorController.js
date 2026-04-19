@@ -155,15 +155,6 @@ export const updateMe = asyncHandler(async (req, res, next) => {
   if (hasOwnCar !== undefined && typeof hasOwnCar !== "boolean") {
     return next(new AppError("hasOwnCar must be boolean", 400));
   }
-  if (minPrice !== undefined && (isNaN(minPrice) || minPrice < 0)) {
-    return next(new AppError("minPrice must be positive", 400));
-  }
-  if (maxPrice !== undefined && (isNaN(maxPrice) || maxPrice < 0)) {
-    return next(new AppError("maxPrice must be positive", 400));
-  }
-  if (minPrice !== undefined && maxPrice !== undefined && Number(minPrice) > Number(maxPrice)) {
-    return next(new AppError("minPrice cannot be greater than maxPrice", 400));
-  }
 
   const userUpdates = {};
   if (firstName) userUpdates.firstName = firstName;
@@ -181,8 +172,6 @@ export const updateMe = asyncHandler(async (req, res, next) => {
   if (canTeachManual !== undefined) instructorUpdates.canTeachManual = canTeachManual;
   if (canTeachAutomatic !== undefined) instructorUpdates.canTeachAutomatic = canTeachAutomatic;
   if (hasOwnCar !== undefined) instructorUpdates.hasOwnCar = hasOwnCar;
-  if (minPrice !== undefined) instructorUpdates["pricing.minPrice"] = minPrice;
-  if (maxPrice !== undefined) instructorUpdates["pricing.maxPrice"] = maxPrice;
 
   const instructor = await Instructor.findOneAndUpdate(
     { user: req.user._id },

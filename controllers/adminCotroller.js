@@ -16,10 +16,71 @@ export const verifications = async (req, res) => {
     const total = await User.countDocuments({ isVerified: false });
 
     return res.status(200).json(paginatedResponse(pendingUsers, total, page, limit));
-  } catch (error) {
+} catch (error) {
     return res.status(500).json({
       status: "error",
       message: "حدث خطأ ",
+    });
+  }
+};
+
+export const setInstructorPricing = async (req, res) => {
+  try {
+    const { instructorId, minPrice, maxPrice } = req.body;
+
+    if (!instructorId) {
+      return res.status(400).json({
+        status: "error",
+        message: "instructorId is required",
+      });
+    }
+
+    if (minPrice !== undefined && (isNaN(minPrice) || minPrice < 0)) {
+      return res.status(400).json({
+        status: "error",
+        message: "minPrice must be a positive number",
+      });
+    }
+
+    if (maxPrice !== undefined && (isNaN(maxPrice) || maxPrice < 0)) {
+      return res.status(400).json({
+        status: "error",
+        message: "maxPrice must be a positive number",
+      });
+    }
+
+    if (minPrice !== undefined && maxPrice !== undefined && Number(minPrice) > Number(maxPrice)) {
+      return res.status(400).json({
+        status: "error",
+        message: "minPrice cannot be greater than maxPrice",
+      });
+    }
+
+    const Instructor = (await import("../models/index.js")).Instructor;
+    const instructor = await Instructor.findById(instructorId);
+
+    if (!instructor) {
+      return res.status(404).json({
+        status: "error",
+        message: "Instructor not found",
+      });
+    }
+
+    const updates = {};
+    if (minPrice !== undefined) updates["pricing.minPrice"] = minPrice;
+    if (maxPrice !== undefined) updates["pricing.maxPrice"] = maxPrice;
+
+    await Instructor.findByIdAndUpdate(instructorId, updates);
+
+    res.status(200).json({
+      status: "success",
+      message: "Pricing updated successfully",
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      message: error.message,
     });
   }
 };

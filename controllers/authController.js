@@ -246,3 +246,103 @@ export const login = async (req, res) => {
     });
   }
 };
+
+/* =========================
+   FORGOT PASSWORD
+========================= */
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        status: "error",
+        message: "Email is required",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        message: "المستخدم غير موجود",
+      });
+    }
+
+    const resetToken = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    user.passwordResetToken = resetToken;
+    user.passwordResetExpires = Date.now() + 3600000;
+    await user.save({ validateBeforeSave: false });
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+    await transporter.sendMail({
+      from: `DriveReady <${process.env.AUTH_EMAIL}>`,
+      to: normalizedEmail,
+      subject: "Password Reset",
+      text: `Use this link to reset your password: ${resetUrl}`,
+    });
+
+    res.status(200).json({
+      status: "success",
+      message: "تم إرسال رابط إعادة تعيين كلمة المرور",
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      message: error.message,
+    });
+  }
+};
+
+/* =========================
+   RESET PASSWORD
+========================= */
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      return res.status(400).json({
+        status: "error",
+        message: "Token and new password are required",
+      });
+    }
+
+    const user = await User.findOne({
+      passwordResetToken: token,
+      passwordResetExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        status: "error",
+        message: "الرابط غير صالح أو منتهي الصلاحية",
+      });
+    }
+
+    user.password = password;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+
+    res.status(200).json({
+      status: "success",
+      message: "تم إعادة تعيين كلمة المرور بنجاح",
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      message: error.message,
+    });
+  }
+};

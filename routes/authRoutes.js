@@ -1,10 +1,9 @@
 import express from "express";
-import { register, verifyOTP , resendOTP , login } from "../controllers/authController.js";
+import { register, verifyOTP, resendOTP, login, forgotPassword, resetPassword } from "../controllers/authController.js";
 import uploadFile from "../middlewares/multer.js";
 
 const router = express.Router();
 
-// POST /api/v1/auth/register
 router.post(
   "/register",
   uploadFile("users", ["image"], 5).fields([
@@ -14,15 +13,12 @@ router.post(
   register
 );
 
-// POST /api/v1/auth/verify-otp
 router.post("/verify-otp", verifyOTP);
-
-// POST /api/v1/auth/resend-otp
 router.post("/resend-otp", resendOTP);
-
-
-// POST /api/v1/auth/login
 router.post("/login", login);
 
+// Password Reset
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 
 export default router;
