@@ -13,14 +13,18 @@ const userSchema = new mongoose.Schema(
       required: [true, "الاسم الأخير مطلوب"],
       trim: true,
     },
-    email: {
-      type: String,
-      required: [true, "البريد الإلكتروني مطلوب"],
-      unique: true,
-      lowercase: true,
-      trim: true,
-      match: [/^\S+@\S+\.\S+$/, "صيغة البريد الإلكتروني غير صحيحة"],
-    },
+  email: {
+  type: String,
+  required: [true, "البريد الإلكتروني مطلوب"],
+  unique: true,
+  index: true,
+  lowercase: true,
+  trim: true,
+  match: [
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    "صيغة البريد الإلكتروني غير صحيحة"
+  ],
+},
     password: {
       type: String,
       required: [true, "كلمة المرور مطلوبة"],
