@@ -9,6 +9,7 @@ import authRoutes from "./routes/authRoutes.js";
 import instructorRoutes from "./routes/instructorRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRouter.js";
+import bookingRoutes from "./routes/bookingRoutes.js";
 import errorHandler from "./middlewares/errorHandler.js";
 import notFound from "./middlewares/notFound.js";
 
@@ -33,6 +34,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/instructors", instructorRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/bookings", bookingRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
