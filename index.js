@@ -19,11 +19,27 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT;
 
-app.use(cors({
-  origin: "http://localhost:7000",
-  credentials: true
-}));
+const allowedOrigins = [
+  "http://localhost:7000",
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "http://localhost:4200",
+];
+ 
 
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
+}));
+ 
+app.options("*", cors());
+ 
 connectDB();
 
 app.use(express.json());
