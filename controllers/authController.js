@@ -5,6 +5,8 @@ import { transporter } from "../config/mailer.js";
 /* =========================
    REGISTER
 ========================= */
+
+
 export const register = async (req, res) => {
   try {
     const {
@@ -21,26 +23,20 @@ export const register = async (req, res) => {
       detales,
     } = req.body;
 
-    if (!email) {
+    if (!email || !password || !firstName) {
       return res.status(400).json({
-        status: "error",
-        message: "Email is required",
+        status: "fail",
+        message: "Missing required fields",
       });
     }
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    const exists = await User.findOne({ email: normalizedEmail });
+    const otp = String(Math.floor(Math.random() * 1000000)).padStart(6, "0");
 
-    if (exists) {
-      return res.status(400).json({
-        status: "fail",
-        message: "البريد الإلكتروني مستخدم بالفعل",
-      });
-    }
+ 
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-       
+
     const user = await User.create({
       firstName,
       lastName,
@@ -51,27 +47,40 @@ export const register = async (req, res) => {
       role,
       nationalId,
       licenseNumber,
-      location: typeof location === "string" ? JSON.parse(location) : location,
-      detales: typeof detales === "string" ? JSON.parse(detales) : detales,
+      location,
+      detales,
       otp,
       isVerified: false,
       isActive: false,
     });
 
-    await transporter.sendMail({
+    transporter.sendMail({
       from: `DriveReady <${process.env.AUTH_EMAIL}>`,
       to: normalizedEmail,
       subject: "Verify Your Account",
       text: `Your OTP is: ${otp}`,
-    });
+    }).catch(err => console.error("Mail error:", err));
 
     res.status(201).json({
       status: "success",
       message: "تم التسجيل، راجع الإيميل",
-      email: user.email,
     });
+
   } catch (err) {
-    res.status(500).json({ status: "error", message: err.message });
+if (err.code === 11000) {
+  const field = Object.keys(err.keyValue)[0];
+  const value = err.keyValue[field];
+
+  return res.status(400).json({
+    status: "error",
+    message: `${field} (${value}) مستخدم بالفعل`,
+  });
+}
+
+    res.status(500).json({
+      status: "error",
+      message: err.message,
+    });
   }
 };
 
@@ -108,16 +117,28 @@ export const verifyOTP = async (req, res) => {
 
     await user.save();
 
+        const safeUser = {
+      id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+    };
+
     const token = jwt.sign(
-      { id: user._id },
+      { safeUser },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
+
+     
 
     return res.status(200).json({
       status: "success",
       message: "تم التفعيل بنجاح",
       token,
+      safeUser,
     });
 
   } catch (err) {
@@ -212,16 +233,7 @@ export const login = async (req, res) => {
       });
     }
 
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
-
-    user.lastLogin = Date.now();
-    await user.save({ validateBeforeSave: false });
-
-    const safeUser = {
+   const safeUser = {
       id: user._id,
       firstName: user.firstName,
       lastName: user.lastName,
@@ -229,6 +241,17 @@ export const login = async (req, res) => {
       role: user.role,
       isActive: user.isActive,
     };
+
+    const token = jwt.sign(
+      { safeUser },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    user.lastLogin = Date.now();
+    await user.save({ validateBeforeSave: false });
+
+ 
 
     res.status(200).json({
       status: "success",
