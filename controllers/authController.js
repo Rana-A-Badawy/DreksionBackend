@@ -93,8 +93,8 @@ export const verifyOTP = async (req, res) => {
       });
     }
 
-    // check OTP
-    if (user.otp !== otp) {
+    // check OTP (convert to string to handle numeric OTP from frontend)
+    if (user.otp !== String(otp)) {
       return res.status(400).json({
         status: "fail",
         message: "OTP غير صحيح",

@@ -2,7 +2,6 @@ import express from "express";
 const router = express.Router();
 import { auth } from "../middlewares/auth.js";
 import { verifications, approveVerification, setInstructorPricing } from "../controllers/adminController.js";
-import { Router } from "express";
 import { ROLES } from "../config/constants.js";
 import {
   getAllLevels,

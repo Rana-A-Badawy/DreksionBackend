@@ -15,7 +15,6 @@ import {
   getEarnings,
   getStats,
 } from "../controllers/instructorController.js";
-
 import { ROLES } from "../config/constants.js";
 
 router.get("/", getAllInstructors);
@@ -31,15 +30,5 @@ router.get("/me/verification-status", getVerificationStatus);
 router.get("/me/students", getMyStudents);
 router.get("/me/earnings", getEarnings);
 router.get("/me/stats", getStats);
-
-router.use((err, req, res, next) => {
-  if (err.name === "CastError" && err.kind === "ObjectId") {
-    return res.status(400).json({
-      status: "error",
-      message: "Invalid instructor ID format",
-    });
-  }
-  next(err);
-});
 
 export default router;
