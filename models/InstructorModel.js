@@ -103,6 +103,19 @@ const instructorSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    hourlyRate: 
+    { 
+      type: Number, 
+      default: 0, 
+      min: 0 
+    },
+    wallet:     
+    {
+       type: Number, 
+       default: 0, 
+       min: 0 
+    },
+ 
   },
   {
     timestamps: true,

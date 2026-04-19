@@ -74,7 +74,7 @@ const bookingSchema = new mongoose.Schema(
     },
     durationMinutes: {
       type: Number,
-      default: 60,
+      default: 0,
     },
     location: {
       address: String,

@@ -13,6 +13,7 @@ import adminRoutes from "./routes/adminRouter.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
 import errorHandler from "./middlewares/errorHandler.js";
 import notFound from "./middlewares/notFound.js";
+import sessionRoutes from "./routes/session.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -57,6 +58,7 @@ app.use("/api/v1/instructors", instructorRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/bookings", bookingRoutes);
+app.use("/api/v1/sessions", sessionRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
