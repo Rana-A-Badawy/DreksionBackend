@@ -38,7 +38,7 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
 }));
  
-app.options("*", cors());
+app.options("/{*splat}", cors());
  
 connectDB();
 
